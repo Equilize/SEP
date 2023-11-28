@@ -1,0 +1,13 @@
+2,2,2,0,0,0
+
+A,T
+B,S
+
+AA
+AA
+BB
+BB
+AA
+AA
+BB
+BB

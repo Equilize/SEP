@@ -1,0 +1,232 @@
+这段代码是用于建立一个三维空间内不同方块的八叉树（Octree）表示，并进行压缩。八叉树是一个常用于三维空间划分的数据结构。每一个节点要么是一个叶子节点，要么有8个子节点。
+
+数据结构
+
+OctreeNode: 这是八叉树节点的定义。每个节点有一个tag（标记，可能表示方块的类型），一个isLeaf（是否是叶子节点的标志），以及一个children数组（子节点）。
+
+主要函数
+
+buildOctree：这个函数用于递归构建八叉树。
+
+1.1. 首先检查给定的范围是否有效。
+
+1.2. 初始化firstTag和isUniform变量。
+
+1.3. 遍历给定范围内的所有方块，检查是否所有方块都具有相同的tag。
+
+1.4. 根据isUniform的值，要么创建一个叶子节点，要么创建一个非叶子节点并递归地为其生成子节点。
+
+compressOctree：这个函数用于遍历已构建的八叉树，并生成压缩的输出。
+
+2.1. 如果当前节点是叶子节点，直接将其信息加入到output数组中。
+
+2.2. 如果不是叶子节点，递归地对其每一个子节点进行相同的操作。
+
+compress：这是主函数，它首先使用buildOctree构建八叉树，然后使用compressOctree来生成压缩的输出。
+
+工作流程
+
+首先调用compress函数，该函数接收三个参数：block（包含三维空间尺寸的信息），tagTable（方块类型到字符串的映射），和blockContent（三维数组，表示每一个方块的类型）。
+
+compress函数内部首先调用buildOctree函数来构建八叉树。
+
+2.1. buildOctree函数递归地将每一个区域划分成8个子区域，除非该区域内所有方块都具有相同的tag。
+
+2.2. 在递归过程中，buildOctree利用位操作和中点坐标来快速确定每一个子区域的范围。
+
+八叉树构建完成后，compress函数调用compressOctree函数来生成压缩的输出。
+
+3.1. compressOctree遍历八叉树的每一个节点。
+
+3.2. 对于每一个叶子节点，它将该节点的信息添加到输出数组output中。
+
+3.3. 对于非叶子节点，它递归地对每一个子节点进行同样的操作。
+
+最后，compress函数返回压缩后的输出数组。
+
+================================================================================================================================
+
+在buildOctree函数中：
+第一层for循环（for(int z = zStart; z <= zEnd && isUniform; ++z)）：
+
+作用：遍历Z轴上的所有方块。
+
+工作流程：从zStart到zEnd遍历。
+
+第二层for循环（for(int y = yStart; y <= yEnd && isUniform; ++y)）：
+
+作用：遍历Y轴上的所有方块。
+
+工作流程：从yStart到yEnd遍历。
+
+第三层for循环（for(int x = xStart; x <= xEnd && isUniform; ++x)）：
+
+作用：遍历X轴上的所有方块。
+工作流程：从xStart到xEnd遍历，并检查当前方块(blockContent[z][y][x])是否与firstTag相同。如果不同，则设置isUniform为false。
+
+
+第二部分代码主要是用于创建一个新的OctreeNode并进行子区域的递归划分。
+
+OctreeNode* node = new OctreeNode(firstTag);
+
+作用：根据检测到的firstTag创建一个新的OctreeNode。
+工作流程：这个新节点默认为叶子节点（isLeaf=true）。
+if(!isUniform) { ... }
+
+作用：如果检测到当前区域内的方块不是全都具有相同的tag，则进入这个if语句。
+工作流程：在这个if语句内，会对当前区域进行进一步的划分。
+node->isLeaf = false;
+
+作用：因为区域内有多种类型的方块，所以设置这个节点为非叶子节点。
+中点计算：
+
+作用：计算x、y、z轴的中点坐标。
+
+代码：
+
+int xMid = (xStart + xEnd) / 2;
+int yMid = (yStart + yEnd) / 2;
+int zMid = (zStart + zEnd) / 2;
+for (int i = 0; i < 8; ++i) { ... }
+
+作用：遍历当前节点的所有8个子节点。
+
+工作流程：从0到7遍历。
+
+内部代码解释：
+
+int xOffset = (i & 1) ? (xMid + 1) : xStart;：使用位操作来决定x方向的子区域起点。
+
+int yOffset = (i & 2) ? (yMid + 1) : yStart;：使用位操作来决定y方向的子区域起点。
+
+int zOffset = (i & 4) ? (zMid + 1) : zStart;：使用位操作来决定z方向的子区域起点。
+
+接着，用这些新计算出的起点和终点坐标递归调用buildOctree，并将返回的子节点设置为当前节点的子节点：
+
+node->children[i] = buildOctree(blockContent, xOffset, xOffset + xMid - xStart, yOffset, yOffset + yMid - yStart, zOffset, zOffset + zMid - zStart);
+
+这一段代码的主要作用是创建一个新的OctreeNode，然后根据当前区域内方块的tag是否均匀来决定是直接将这个节点设置为叶子节点，还是进行进一步的区域划分并递归构建子节点。
+
+============================================================
+
+compressOctree函数功能
+
+compressOctree函数用于将一个Octree结构压缩成一个更易于存储或传输的形式。具体来说，它会遍历该Octree，并生成一系列的OutputBlock结构体，每个OutputBlock代表一个方块区域及其标签。
+
+参数
+OctreeNode* node: 当前要处理的Octree节点。
+BlockInfo &block: 包含块的信息。
+std::map<char, std::string> &tagTable: 一个从字符标签（tag）到字符串的映射。
+int xStart, xEnd, yStart, yEnd, zStart, zEnd: 当前处理区块的坐标范围。
+std::vector<OutputBlock> &output: 存储输出结果的数组。
+
+工作流程
+
+判断是否是叶子节点：首先函数检查node->isLeaf，如果这是一个叶子节点，那么就生成一个OutputBlock。
+
+if(node->isLeaf) {
+    OutputBlock blockOutput = {xStart, yStart, zStart, xEnd - xStart + 1, yEnd - yStart + 1, zEnd - zStart + 1, tagTable.at(node->tag)};
+    output.push_back(blockOutput);
+}
+
+这里，用xEnd - xStart + 1（以及y和z的相应计算）来确定该区块的大小。
+使用tagTable.at(node->tag)来找到该标签对应的字符串。
+处理非叶子节点：如果这不是一个叶子节点，那么进行递归调用来处理子节点。
+
+else {
+    int xMid = (xStart + xEnd) / 2;
+    int yMid = (yStart + yEnd) / 2;
+    int zMid = (zStart + zEnd) / 2;
+
+首先计算x、y、z方向的中点。
+遍历所有子节点：
+
+for (int i = 0; i < 8; ++i) {
+遍历当前Octree节点的8个子节点。
+计算子区域的坐标范围：
+
+int xOffset = (i & 1) ? (xMid + 1) : xStart;
+int yOffset = (i & 2) ? (yMid + 1) : yStart;
+int zOffset = (i & 4) ? (zMid + 1) : zStart;
+使用位运算来确定子区域的起始坐标。
+
+递归调用：
+
+compressOctree(node->children[i], block, tagTable, xOffset, xOffset + xMid - xStart, yOffset, yOffset + yMid - yStart, zOffset, zOffset + zMid - zStart, output);
+
+递归调用compressOctree函数来处理子节点，传递新计算出的坐标范围。
+这样，通过递归地调用compressOctree，你可以遍历整个Octree并生成一个包含所有OutputBlock的数组。这个数组可以用于更高效地存储或传输这个三维方块结构。
+
+================================================================
+
+测试程序的 README
+程序概览
+程序由几个组件构成：
+
+main.cpp：控制程序的主流程，包括读取输入、压缩数据和输出结果。
+IOHandler.h 和 IOHandler.cpp：负责程序的输入和输出。
+ModelData.h 和 ModelData.cpp：定义数据模型并包含用于压缩3D块的逻辑。
+
+如何编译
+
+确保您已安装 C++ 编译器（例如，g++）。
+转到包含所有 .cpp 和 .h 文件的文件夹。
+运行 g++ -o myProgram main.cpp IOHandler.cpp ModelData.cpp。
+
+如何运行
+
+运行 ./myProgram 并在提示时输入适当的输入数据。
+
+如何测试
+
+输入格式测试：确保程序能够处理不正确的输入格式。测试无效的字符、分隔符和维度。
+
+标签表测试：测试程序是否能够处理不正确或不完整的标签表。例如，提供一个不在表中的标签。
+
+压缩测试：创建具有已知可压缩区域的各种3D块，并检查程序是否正确地识别并压缩它们。
+
+输出格式测试：检查输出是否正确格式化并与预期的压缩块匹配。
+
+
+示例测试用例
+准备一个名为 input.txt 的文件，结构如下（根据需要调整数据）：
+
+// 第一行包含块尺寸和父尺寸（如果有的话）
+2,2,2,0,0,0
+// 下一行到一个空行为标签表
+A,标签1
+B,标签2
+
+// 其余行为块数据
+AAAA
+BBBB
+AAAA
+BBBB
+使用此文件重定向输入来运行程序：
+
+./myProgram < input.txt
+
+将输出与预期结果进行比较。
+程序流程
+main.cpp 使用 IOHandler.cpp 中的 read_input 读取输入并检查错误。
+然后，它调用 ModelData.cpp 中的 compress，该函数构建一个八叉树并压缩数据。
+最后，使用 IOHandler.cpp 中的 write_output 写入压缩数据。
+调试提示
+要进行调试，您可以在代码的关键部分（例如，在 buildOctree 中创建节点时或在 write_output 中写入数据时）包含 std::cout 语句。
+按照上述步骤，您应该能够全面地测试应用程序的不同场景和边缘情况。
+
+期望输出
+假设一个 2x2x2 的块的数据如下：
+
+第一层：AA
+BB
+第二层：AA
+BB
+则压缩后的输出可能类似于：
+
+yaml格式
+
+Compressed Output:
+0,0,0,1,1,1,标签1
+1,1,1,1,1,1,标签2
+注意：这个输出示例仅为说明程序的基本工作方式，实际输出可能会有所不同。

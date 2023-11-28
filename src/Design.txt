@@ -1,0 +1,28 @@
+FileIO --> Responsible solely for input operations 
+- Connect to input stream 
+Functions
+    void readFromStream(BlockInfo& block, map<char, string>& tagTable, vector<vector<vector<char>>>& blockModel)
+    //Reads from cin
+
+    void readFromCSV(const string& filename, BlockInfo& block, map<char, string>& tagTable, vector<vector<vector<char>>>& blockModel)
+    //Reads from readFromCSV
+
+
+
+Block --> Responsible for parsing input and storing in 3D vector
+Functions
+    void parseBlockInfo(istream& stream, BlockInfo& block)
+    //Block info on block size and parent size
+
+    void parseTagTable(istream& stream, map<char, string>& tagTable)
+    //Tag table
+
+    void parseblockContent(istream& stream, const BlockInfo& block, vector<vector<vector<char>>>& blockModel)
+    //Block content
+
+
+
+DataStruc --> Responsible for processing data in 3D vector into desired data structure
+Functions
+    Octree* buildOctree(const vector<vector<vector<char>>>& blockModel)
+

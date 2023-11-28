@@ -1,0 +1,40 @@
+#include "IOHandler.h"
+#include "GreedyAlgorithm.h"
+#include <iostream>
+
+int main() {
+    // read input using IOHandler
+    InputResult inputResult = read_input();
+
+    // check for errors in the input
+    if(inputResult.errorCode != ErrorCode::SUCCESS) {
+        std::cerr << "Error reading input: ";
+        switch(inputResult.errorCode) {
+            case ErrorCode::INVALID_BLOCK_INFO:
+                std::cerr << "INVALID_BLOCK_INFO";
+                break;
+            case ErrorCode::INVALID_TAG_TABLE:
+                std::cerr << "INVALID_TAG_TABLE";
+                break;
+            case ErrorCode::MISMATCH_BLOCK_CONTENT:
+                std::cerr << "MISMATCH_BLOCK_CONTENT";
+                break;
+            case ErrorCode::MISMATCH_TAG_LABEL:
+                std::cerr << "MISMATCH_TAG_LABEL";
+                break;
+            default:
+                std::cerr << "Unknown error";
+        }
+        std::cerr << std::endl;
+        return 1;
+    }
+
+    // compress data using GreedyAlgorithm
+    std::vector<OutputBlock> compressedOutput = compress(inputResult.block, inputResult.tagTable, inputResult.blockModel);
+
+    // write compressed output using IOHandler
+    write_output(compressedOutput);
+
+    return 0;
+}
+
